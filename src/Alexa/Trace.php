@@ -11,10 +11,10 @@ namespace Alexa;
 class Trace
 {
     public static function out($text){
-        $traceFile ="";
+        $traceFile ="AlexaTrace.log";
         if(defined('TRACE_FILE') == true){
             $traceFile = TRACE_FILE;
         }
-        //file_put_contents("AlexaTrace.log", date("Y-m-d H:i:s  ").$text."\n");
+        file_put_contents($traceFile, date("Y-m-d H:i:s  ").$text."\n");
     }
 }
