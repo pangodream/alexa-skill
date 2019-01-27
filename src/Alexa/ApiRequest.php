@@ -37,10 +37,12 @@ class ApiRequest
 
     public function __construct( bool $allowNotValidRequest = null)
     {
-        if($allowNotValidRequest == true){
-            $this->allowInvalidRequests = true;
-        }else{
+        if($allowNotValidRequest == null){
             $this->allowInvalidRequests = false;
+        }else{
+            if($allowNotValidRequest == true){
+                $this->allowInvalidRequests = true;
+            }
         }
         $this->validated = false;
         $this->isValid = false;
@@ -52,11 +54,14 @@ class ApiRequest
             $this->isValid = true;
         }else{
             if($this->allowInvalidRequests !== true){
-                return response('Bad request', 400);
+                $this->responseBadRequest();
             }
         }
     }
-
+    private function responseBadRequest(){
+        http_response_code(400);
+        exit();
+    }
     /**
      * @param array $httpRequest
      */
@@ -91,15 +96,15 @@ class ApiRequest
             $this->request->timestamp = $httpRequest['request']['timestamp'];
             $requestUnixTime = strtotime($this->request->timestamp);
             if(abs(time() - $requestUnixTime) > 150 && $this->allowInvalidRequests !== true){
-                Logger::warning("Request timestamp dif > 150 secs");
-                return response('Bad request', 400);
+                Trace::out("Request timestamp dif > 150 secs");
+                $this->responseBadRequest();
             }
 
         }else{
             $this->request->timestamp = null;
             if($this->allowInvalidRequests !== true){
-                Logger::warning("No request timestamp");
-                return response('Bad request', 400);
+                Trace::out("No request timestamp");
+                $this->responseBadRequest();
             }
         }
         if(isset($httpRequest['request']['locale'])){
