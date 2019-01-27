@@ -13,15 +13,15 @@ The request validation checks all these Amazon requirements (except the last one
 All these requirements are described at
 [Host a Custom Skill as a Web Service](https://developer.amazon.com/es/docs/custom-skills/host-a-custom-skill-as-a-web-service.html#verifying-that-the-request-was-sent-by-alexa)
 
-#How to
+# How to
 How to use this component
 
-##Composer Installation
+## Composer Installation
 ```bash
 composer require pangodream/alexa-skill
 ```
 
-##Usage example in Laravel
+## Usage example in Laravel
 This is an example made in Laravel, though the component has no external dependencies (appart from PHP 7.0)
 
 Let's create an API entry point in api.php file. 
