@@ -10,6 +10,17 @@ The request validation checks all these Amazon requirements (except the last one
 * Signature decryption with Cert PK to match SHA1 hash of request body
 * CertChain Root Certification Authority valid to Amazon (still pending)
 
+Though last requisite is still pending, **Functional testing** under **Certification** tab obtains **"Zero errors found."**.
+
+Functional testing, at least in my case, has made 7 requests and the component resolved succesfully all of them:
+* Request well formed --> Response OK
+* Request well formed --> Response OK
+* Request well formed --> Response OK
+* CertChain not available in specified URL --> Response 400 bad request
+* No signature --> Response 400 bad request
+* CertChain not available in specified URL --> Response 400 bad request
+* Signature doesn't match calculated hash SHA1 --> Response 400 bad request
+
 All these requirements are described at
 [Host a Custom Skill as a Web Service](https://developer.amazon.com/es/docs/custom-skills/host-a-custom-skill-as-a-web-service.html#verifying-that-the-request-was-sent-by-alexa)
 
@@ -26,7 +37,7 @@ This is an example made in Laravel, though the component has no external depende
 
 Let's create an API entry point in api.php file. 
 
-api.php
+**api.php**
 ```php
 <?php
 
@@ -54,7 +65,7 @@ https://iot.mydomain.net/api/alexa
 ```
 
 Now, create the controller and the method to receive the http request and process it
-AlexaController.php
+**AlexaController.php**
 ```php
 <?php
 
@@ -97,6 +108,7 @@ And thats all!
 
 Here is the Alexa Skill JSON definition of the skill I have been playing with
 
+**Skill JSON**
 ```json
 {
     "interactionModel": {
@@ -176,11 +188,11 @@ Here is the Alexa Skill JSON definition of the skill I have been playing with
 
 Once the skill is created and compiled it can be tested:
 
-You: "Alexa, ask sebastian to switch off the livingroom fan"
+**You:** "Alexa, ask sebastian to switch off the livingroom fan"
 
 And if everything goes fine, Alexa will reply:
 
-Alexa: "You asked me to switch off  the livingroom fan"
+**Alexa:** "You asked me to switch off  the livingroom fan"
 
 Any suggestion or question is always welcome.
 
