@@ -83,7 +83,7 @@ class ApiRequest
             $this->session->application->applicationId = $httpRequest['session']['application']['applicationId'];
         }
         if(isset($httpRequest['session']['user']['userId'])){
-            $this->session->application->applicationId = $httpRequest['session']['user']['userId'];
+            $this->session->user->userId = $httpRequest['session']['user']['userId'];
         }
 
         //Request
