@@ -144,61 +144,68 @@ class ApiRequest
     public function validateHttpRequest(){
         //https://developer.amazon.com/es/docs/custom-skills/host-a-custom-skill-as-a-web-service.html#verifying-that-the-request-was-sent-by-alexa
         $result = 0;
-
-        if(isset($_SERVER['HTTP_SIGNATURECERTCHAINURL'])){
-            $signatureCertChainUrl = $_SERVER['HTTP_SIGNATURECERTCHAINURL'];
-        }else{
-            $signatureCertChainUrl = null;
-            $result = 90; //No CertChain URL
-        }
-        if($signatureCertChainUrl != null) {
-            $protocol = parse_url($signatureCertChainUrl, PHP_URL_SCHEME);
-            if ($protocol != "https") {
-                $result = 91; //Protocol is not HTTPS
+        try{
+            if(isset($_SERVER['HTTP_SIGNATURECERTCHAINURL'])){
+                $signatureCertChainUrl = $_SERVER['HTTP_SIGNATURECERTCHAINURL'];
+            }else{
+                $signatureCertChainUrl = null;
+                $result = 90; //No CertChain URL
             }
-            $hostname = parse_url($signatureCertChainUrl, PHP_URL_HOST);
-            if ($hostname != "s3.amazonaws.com") {
-                $result = 92; //Host is not Amazon
-            }
-            $port = parse_url($signatureCertChainUrl, PHP_URL_PORT);
-            if ($port != "" && $port != "443") {
-                $result = 93; //Port is not 443
-            }
-            $path = parse_url($signatureCertChainUrl, PHP_URL_PATH);
-            if (substr($path, 0, 10) != "/echo.api/") {
-                $result = 94; //URI path is not correct
-            }
-            if (isset($_SERVER['HTTP_SIGNATURE'])) {
-                $signature = $_SERVER['HTTP_SIGNATURE'];
-            } else {
-                $signature = null;
-                $result = 95; //No request signature header
-            }
-            $certChain = $this->valCertChainAndRetrieve($signatureCertChainUrl);
-            if($certChain == false){
-                $result = 96; //Certificate Chain is not valid
-            }
-            if($signature != null && $certChain !== false){
-                //Log::debug("Signature: ".$signature);
-                $decodedSignature = base64_decode($signature);
-                //Log::debug("Decoded signature: ".$decodedSignature);
-                $decrypted = "";
-
-                $publicKey = openssl_pkey_get_public($certChain);
-                openssl_public_decrypt ($decodedSignature, $decrypted, $publicKey);
-
-                //Trace::out("Decrypted signature: ".$decrypted);
-                //Trace::out("Decrypted signature b64: ".base64_encode($decrypted));
-                //sha1
-                $entityBody = file_get_contents('php://input');
-                $sha1Hash = sha1($entityBody, true);
-                if($sha1Hash != substr($decrypted, -strlen($sha1Hash))){
-                    $result = 97; //Hash SHA1 doesn't match signature
+            if($signatureCertChainUrl != null) {
+                $protocol = parse_url($signatureCertChainUrl, PHP_URL_SCHEME);
+                if ($protocol != "https") {
+                    $result = 91; //Protocol is not HTTPS
                 }
-                //Trace::out("sha1Hash: ".$sha1Hash);
-                //Trace::out("sha1Hash b64: ".base64_encode($sha1Hash));
+                $hostname = parse_url($signatureCertChainUrl, PHP_URL_HOST);
+                if ($hostname != "s3.amazonaws.com") {
+                    $result = 92; //Host is not Amazon
+                }
+                $port = parse_url($signatureCertChainUrl, PHP_URL_PORT);
+                if ($port != "" && $port != "443") {
+                    $result = 93; //Port is not 443
+                }
+                $path = parse_url($signatureCertChainUrl, PHP_URL_PATH);
+                if (substr($path, 0, 10) != "/echo.api/") {
+                    $result = 94; //URI path is not correct
+                }
+                if (isset($_SERVER['HTTP_SIGNATURE'])) {
+                    if(trim($_SERVER['HTTP_SIGNATURE']) != "") {
+                        $signature = $_SERVER['HTTP_SIGNATURE'];
+                    }
+                } else {
+                    $signature = null;
+                    $result = 95; //No request signature header
+                }
+                $certChain = $this->valCertChainAndRetrieve($signatureCertChainUrl);
+                if($certChain == false){
+                    $result = 96; //Certificate Chain is not valid
+                }
+                $sha1Hash = "";
+                if($signature != null && $certChain !== false){
+                    //Log::debug("Signature: ".$signature);
+                    $decodedSignature = base64_decode($signature);
+                    //Log::debug("Decoded signature: ".$decodedSignature);
+                    $decrypted = "";
+
+                    $publicKey = openssl_pkey_get_public($certChain);
+                    openssl_public_decrypt ($decodedSignature, $decrypted, $publicKey);
+
+                    //Trace::out("Decrypted signature: ".$decrypted);
+                    //Trace::out("Decrypted signature b64: ".base64_encode($decrypted));
+                    //sha1
+                    $entityBody = file_get_contents('php://input');
+                    $sha1Hash = sha1($entityBody, true);
+                    if($sha1Hash != substr($decrypted, -strlen($sha1Hash))){
+                        $result = 97; //Hash SHA1 doesn't match signature
+                    }
+                    //Trace::out("sha1Hash: ".$sha1Hash);
+                    //Trace::out("sha1Hash b64: ".base64_encode($sha1Hash));
+                }
             }
+        }catch(\Exception $e){
+            $result = 99;
         }
+
         if($result != 0){
             $resTxt = array(
                 0 => "OK",
@@ -210,6 +217,7 @@ class ApiRequest
                 95 => "No request signature header",
                 96 => "Certificate Chain is not valid",
                 97 => "Hash SHA1 doesn't match signature",
+                99 => "Error desconocido",
             );
             Trace::out("Request validation result: ".$result." - ".$resTxt[$result]);
         }
