@@ -52,7 +52,7 @@ class ApiRequest
             $this->isValid = true;
         }else{
             if($this->allowInvalidRequests !== true){
-                die();
+                return response()->setStatusCode(400, 'Bad request');
             }
         }
     }
@@ -92,14 +92,14 @@ class ApiRequest
             $requestUnixTime = strtotime($this->request->timestamp);
             if(abs(time() - $requestUnixTime) > 150 && $this->allowInvalidRequests !== true){
                 Logger::warning("Request timestamp dif > 150 secs");
-                die();
+                return response()->setStatusCode(400, 'Bad request');
             }
 
         }else{
             $this->request->timestamp = null;
             if($this->allowInvalidRequests !== true){
                 Logger::warning("No request timestamp");
-                die();
+                return response()->setStatusCode(400, 'Bad request');
             }
         }
         if(isset($httpRequest['request']['locale'])){
